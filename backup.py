@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing import image
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-import cv2
+# import cv2
 
 # Function to load the trained model
 @st.cache_resource
@@ -42,77 +42,77 @@ def preprocess_image(img):
 
 # Function to compute Grad-CAM
 # Grad-CAM function
-def get_gradcam_heatmap(model, img_array, last_conv_layer_name="block14_sepconv2_act"):
-    # Call the model to ensure the layers are initialized
-    _ = model.predict(img_array)  # Make a prediction to initialize model's state
+# def get_gradcam_heatmap(model, img_array, last_conv_layer_name="block14_sepconv2_act"):
+#     # Call the model to ensure the layers are initialized
+#     _ = model.predict(img_array)  # Make a prediction to initialize model's state
     
-    # Create a model that maps the input image to the activations of the last conv layer and the predictions
-    grad_model = tf.keras.models.Model(
-        [model.input], 
-        [model.get_layer("xception").get_layer(last_conv_layer_name).output, model.output]
-    )
+#     # Create a model that maps the input image to the activations of the last conv layer and the predictions
+#     grad_model = tf.keras.models.Model(
+#         [model.input], 
+#         [model.get_layer("xception").get_layer(last_conv_layer_name).output, model.output]
+#     )
 
-    # Compute the gradient of the top predicted class for the input image
-    with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(img_array)
-        predicted_class = tf.argmax(predictions[0])
-        loss = predictions[:, predicted_class]
+#     # Compute the gradient of the top predicted class for the input image
+#     with tf.GradientTape() as tape:
+#         conv_outputs, predictions = grad_model(img_array)
+#         predicted_class = tf.argmax(predictions[0])
+#         loss = predictions[:, predicted_class]
 
-    # Compute the gradients of the predicted class with respect to the feature map
-    grads = tape.gradient(loss, conv_outputs)
+#     # Compute the gradients of the predicted class with respect to the feature map
+#     grads = tape.gradient(loss, conv_outputs)
 
-    # Compute the mean intensity of the gradient over each feature map channel
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+#     # Compute the mean intensity of the gradient over each feature map channel
+#     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
-    # Multiply each channel by the average gradient
-    conv_outputs = conv_outputs[0]
-    conv_outputs *= pooled_grads
+#     # Multiply each channel by the average gradient
+#     conv_outputs = conv_outputs[0]
+#     conv_outputs *= pooled_grads
 
-    # Generate the heatmap by averaging over all channels
-    heatmap = tf.reduce_mean(conv_outputs, axis=-1)
+#     # Generate the heatmap by averaging over all channels
+#     heatmap = tf.reduce_mean(conv_outputs, axis=-1)
 
-    # Normalize the heatmap
-    heatmap = np.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
-    return heatmap.numpy()
-
-
-# Function to overlay heatmap on image
-def overlay_heatmap(heatmap, img, alpha=0.4, colormap=cv2.COLORMAP_JET):
-    # Resize heatmap to match the size of the image
-    heatmap = cv2.resize(heatmap, (img.size[0], img.size[1]))
-
-    # Convert the heatmap to RGB using colormap
-    heatmap = np.uint8(255 * heatmap)
-    heatmap = cv2.applyColorMap(heatmap, colormap)
-
-    # Convert PIL image to NumPy array and merge heatmap
-    img = np.array(img)
-    superimposed_img = cv2.addWeighted(heatmap, alpha, img, 1 - alpha, 0)
-
-    # Return as PIL image
-    return Image.fromarray(superimposed_img)
+#     # Normalize the heatmap
+#     heatmap = np.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+#     return heatmap.numpy()
 
 
-# Function to display Grad-CAM heatmap
-def display_gradcam(img_path, heatmap, alpha=0.4, cmap=cv2.COLORMAP_JET):
-    img = image.load_img(img_path)
-    img_array = image.img_to_array(img)
+# # Function to overlay heatmap on image
+# def overlay_heatmap(heatmap, img, alpha=0.4, colormap=cv2.COLORMAP_JET):
+#     # Resize heatmap to match the size of the image
+#     heatmap = cv2.resize(heatmap, (img.size[0], img.size[1]))
+
+#     # Convert the heatmap to RGB using colormap
+#     heatmap = np.uint8(255 * heatmap)
+#     heatmap = cv2.applyColorMap(heatmap, colormap)
+
+#     # Convert PIL image to NumPy array and merge heatmap
+#     img = np.array(img)
+#     superimposed_img = cv2.addWeighted(heatmap, alpha, img, 1 - alpha, 0)
+
+#     # Return as PIL image
+#     return Image.fromarray(superimposed_img)
+
+
+# # Function to display Grad-CAM heatmap
+# def display_gradcam(img_path, heatmap, alpha=0.4, cmap=cv2.COLORMAP_JET):
+#     img = image.load_img(img_path)
+#     img_array = image.img_to_array(img)
     
-    # Resize heatmap to match the image size
-    heatmap = cv2.resize(heatmap, (img_array.shape[1], img_array.shape[0]))
+#     # Resize heatmap to match the image size
+#     heatmap = cv2.resize(heatmap, (img_array.shape[1], img_array.shape[0]))
     
-    # Convert the heatmap to RGB
-    heatmap = np.uint8(255 * heatmap)
-    heatmap = cv2.applyColorMap(heatmap, cmap)
+#     # Convert the heatmap to RGB
+#     heatmap = np.uint8(255 * heatmap)
+#     heatmap = cv2.applyColorMap(heatmap, cmap)
     
-    # Superimpose the heatmap on the original image
-    superimposed_img = heatmap * alpha + img_array
-    superimposed_img = np.uint8(superimposed_img)
+#     # Superimpose the heatmap on the original image
+#     superimposed_img = heatmap * alpha + img_array
+#     superimposed_img = np.uint8(superimposed_img)
 
-    # Display the superimposed image
-    plt.imshow(superimposed_img)
-    plt.axis('off')
-    plt.show()
+#     # Display the superimposed image
+#     plt.imshow(superimposed_img)
+#     plt.axis('off')
+#     plt.show()
 
 # Load the trained model
 model = load_trained_model()
