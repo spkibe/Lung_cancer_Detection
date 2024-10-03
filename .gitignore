@@ -165,5 +165,3 @@ cython_debug/
 save_model-20240930T181348Z-001/
 
 *.h5
-*.keras
-C_CT_S.keras
