@@ -67,3 +67,4 @@ urllib3==2.2.3
 watchdog==4.0.2
 Werkzeug==3.0.4
 wrapt==1.16.0
+opencv-python==4.10.0.84
